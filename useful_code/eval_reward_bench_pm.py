@@ -23,7 +23,7 @@ class ScriptArguments:
         metadata={"help": "the location of the output file"},
     )
     preference_name_or_path: Optional[str] = field(
-        default="/home/cyeab/axtool/models/llama8b_it_data_henrydong/checkpoint-1308",
+        default="/data1/WM_workspace/checkpoints/qwen2-1.5b/",
         metadata={"help": "the name of the gold reward model"},
     )
 
@@ -38,8 +38,8 @@ device = 0
 
 model = AutoModelForCausalLM.from_pretrained(script_args.preference_name_or_path,
                                              torch_dtype=torch.bfloat16, attn_implementation="flash_attention_2").cuda()
-tokenizer = AutoTokenizer.from_pretrained("/home/cyeab/axtool/models/llama3_it_427_update", use_fast=True)
-tokenizer_plain = AutoTokenizer.from_pretrained("/home/cyeab/axtool/models/llama3_it_427_update", use_fast=True)
+tokenizer = AutoTokenizer.from_pretrained("/data1/WM_workspace/checkpoints/qwen2-1.5b/", use_fast=True)
+tokenizer_plain = AutoTokenizer.from_pretrained("/data1/WM_workspace/checkpoints/qwen2-1.5b/", use_fast=True)
 tokenizer_plain.chat_template = "\n{% for message in messages %}{% if loop.index0 % 2 == 0 %}\n\n<turn> user\n {{ message['content'] }}{% else %}\n\n<turn> assistant\n {{ message['content'] }}{% endif %}{% endfor %}\n\n\n"
 
 prompt_template = "[CONTEXT] {context} [RESPONSE A] {response_A} [RESPONSE B] {response_B} \n"
@@ -72,9 +72,9 @@ for i, example in enumerate(tqdm(ds)):
         message = [
             {"role": "user", "content": prompt},
         ]
-
-        input_ids = tokenizer.encode(tokenizer.apply_chat_template(message, tokenize=False).replace(tokenizer.bos_token, ""), return_tensors='pt', add_special_tokens=False).cuda() 
-    
+        # input_ids = tokenizer.encode(tokenizer.apply_chat_template(message, tokenize=False).replace(tokenizer.bos_token, ""), return_tensors='pt', add_special_tokens=False).cuda() 
+        input_ids = tokenizer.encode(tokenizer.apply_chat_template(message, tokenize=False), return_tensors='pt', add_special_tokens=False).cuda() 
+        
         with torch.no_grad():
             output = model(input_ids)
         logit_A = output.logits[0, -1, token_id_A].item()
@@ -87,9 +87,8 @@ for i, example in enumerate(tqdm(ds)):
     avg_prob_chosen = np.mean(probs_chosen)
     correct = 0.5 if avg_prob_chosen == 0.5 else float(avg_prob_chosen > 0.5)
 
-    row = {'id': example['id'], 'subset': example['subset']}
-    row['correct'] = correct
-    df = df._append(row, ignore_index=True)
+    row = {'id': example['id'], 'subset': example['subset'], 'correct': correct}
+    df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
 
 categories = {
     "chat": ["alpacaeval-easy", 'alpacaeval-length', 'alpacaeval-hard', 'mt-bench-easy', 'mt-bench-med'],
@@ -189,7 +188,7 @@ def calculate_scores_per_section(example_counts, subset_mapping, metrics):
 
 
 all_subsets = df['subset'].unique()
-df_final = pd.DataFrame(columns=['attribute', 'Chat', 'Chat Hard', 'Safety', 'Reasoning'])
+df_final = pd.DataFrame(columns=['attribute', 'Score', 'Chat', 'Chat Hard', 'Safety', 'Reasoning'])
 
 attribute = 'correct'
 metrics = {}
@@ -201,11 +200,13 @@ for subset in all_subsets:
 # Calculate and print the scores per section
 scores_per_section = calculate_scores_per_section(EXAMPLE_COUNTS, SUBSET_MAPPING, metrics)
 row = {'attribute': attribute, **scores_per_section}
-df_final = df_final._append(row, ignore_index=True)
+df_final = pd.concat([df_final, pd.DataFrame([row])], ignore_index=True)
+
+df_final['Score'] = round(df_final[['Chat', 'Chat Hard', 'Safety', 'Reasoning']].mean(axis=1), 2)
+    
 print('model:', script_args.preference_name_or_path)
 with open(record_dir, 'a') as f:
     f.write(script_args.preference_name_or_path + "\n")
-    for col in ['Chat', 'Chat Hard', 'Safety', 'Reasoning']:
+    for col in ['Score', 'Chat', 'Chat Hard', 'Safety', 'Reasoning']:
         print(f"{col}: {df_final[col].values[0]}")
-
         f.write(col + "\t" + str(df_final[col].values[0]) + "\n")
