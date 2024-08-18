@@ -23,7 +23,7 @@ class ScriptArguments:
         metadata={"help": "the location of the output file"},
     )
     preference_name_or_path: Optional[str] = field(
-        default="/data1/WM_workspace/checkpoints/qwen2-1.5b/",
+        default="/home/wmz/checkpoints/pair-8b",
         metadata={"help": "the name of the gold reward model"},
     )
 
@@ -38,8 +38,8 @@ device = 0
 
 model = AutoModelForCausalLM.from_pretrained(script_args.preference_name_or_path,
                                              torch_dtype=torch.bfloat16, attn_implementation="flash_attention_2").cuda()
-tokenizer = AutoTokenizer.from_pretrained("/data1/WM_workspace/checkpoints/qwen2-1.5b/", use_fast=True)
-tokenizer_plain = AutoTokenizer.from_pretrained("/data1/WM_workspace/checkpoints/qwen2-1.5b/", use_fast=True)
+tokenizer = AutoTokenizer.from_pretrained("/home/wmz/checkpoints/pair-8b", use_fast=True)
+tokenizer_plain = AutoTokenizer.from_pretrained("/home/wmz/checkpoints/pair-8b", use_fast=True)
 tokenizer_plain.chat_template = "\n{% for message in messages %}{% if loop.index0 % 2 == 0 %}\n\n<turn> user\n {{ message['content'] }}{% else %}\n\n<turn> assistant\n {{ message['content'] }}{% endif %}{% endfor %}\n\n\n"
 
 prompt_template = "[CONTEXT] {context} [RESPONSE A] {response_A} [RESPONSE B] {response_B} \n"
