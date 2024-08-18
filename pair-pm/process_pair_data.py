@@ -7,10 +7,10 @@ all_dirs = [
     # "RLHFcollection/UltraFeedback-preference-standard",
     # "RLHFlow/HH-RLHF-Helpful-standard",
     # "RLHFlow/SHP-standard"
-    "weqweasdas/preference_dataset_mixture2_and_safe_pku150k"
+    "OpenRLHF/preference_dataset_mixture2_and_safe_pku",
 ]
 
-tokenizer_path = "/data1/WM_workspace/checkpoints/phi3-it/"
+tokenizer_path = "/home/wmz/checkpoints/llama3-8b-it"
 tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 tokenizer_plain = AutoTokenizer.from_pretrained(tokenizer_path)
 tokenizer_plain.chat_template = "\n{% for message in messages %}{% if loop.index0 % 2 == 0 %}\n\n<turn> user\n {{ message['content'] }}{% else %}\n\n<turn> assistant\n {{ message['content'] }}{% endif %}{% endfor %}\n\n\n"
@@ -81,4 +81,4 @@ combined_dataset = combined_dataset.shuffle(seed=42)
 
 
 # DatasetDict({'train': combined_dataset}).push_to_hub("You own hf dir")
-DatasetDict({'train': combined_dataset}).save_to_disk("/data1/WM_workspace/datasets/test")
+DatasetDict({'train': combined_dataset}).save_to_disk("/home/wmz/datasets/pref-dataset-mix-2")

@@ -1,4 +1,4 @@
-base_model: /home/wx/axtool/models/llama3_it_with_padding_token
+base_model: /home/wmz/checkpoints/llama-3-8b-it
 model_type: AutoModelForCausalLM
 tokenizer_type: AutoTokenizer
 
@@ -7,7 +7,7 @@ load_in_4bit: false
 strict: false
 
 datasets:
-  - path: RLHFlow/pair-preference-dataset-mix1
+  - path: /home/wmz/datasets/pref-dataset-mix-2
     conversation: llama-3
     type: sharegpt.load_ultrachat
     split: "train"
@@ -26,13 +26,13 @@ train_on_inputs: false
 
 save_safetensors: true
 #noisy_embedding_alpha: 10.0 # default for sharegpt type
-dataset_prepared_path: ~/data/preference-models/last_run_prepared
+dataset_prepared_path: ~/datasets/preference-models/last_run_prepared
 
 
 dataset_processes: 48
 #torch_compile: true
 sequence_len: 3072
-sample_packing: true
+sample_packing: false
 pad_to_sequence_len: true
 
 trust_remote_code: True
@@ -87,7 +87,7 @@ debug:
 
 
 ddp: #true
-deepspeed: #deepspeed/zero1.json # multi-gpu only
+deepspeed: /home/wmz/RLHF-Reward-Modeling/deepspeed_configs/deepspeed_1.json # multi-gpu only
 
 fsdp:
 fsdp_config:
