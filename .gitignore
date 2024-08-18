@@ -1,2 +1,3 @@
 *.txt
 */wandb
+pair-pm/pm_models
